@@ -23,6 +23,7 @@ use crate::{
     core::{
         oauth::{oauth_authenticate, AuthenticationResult},
         schema::{Builder, Schemas, Transformer, Type, Validator},
+        webauthn::{is_webauthn_supported, webauthn_authenticate},
         AccessToken, Permissions,
     },
     STATE_LOGIN_NAME_KEY, STATE_STORAGE_KEY,
@@ -42,6 +43,63 @@ pub fn Login() -> impl IntoView {
     let alert = use_alerts();
     let auth_token = use_context::<RwSignal<AccessToken>>().unwrap();
     let query = use_query_map();
+
+    let passkey_available = is_webauthn_supported();
+
+    let apply_session = move |response: crate::core::oauth::AuthenticationResponse, username: String, base_url: String| {
+        let permissions = Permissions::new(response.permissions);
+        let default_url = permissions.default_url(response.is_enterprise);
+
+        if default_url.is_empty() {
+            alert.set(Alert::error(
+                "You are not authorized to access this service.",
+            ));
+            return;
+        }
+
+        let refresh_token = response.grant.refresh_token.unwrap_or_default();
+        auth_token.update(|auth_token| {
+            auth_token.access_token = response.grant.access_token.into();
+            auth_token.refresh_token = refresh_token.clone().into();
+            auth_token.base_url = base_url.into();
+            auth_token.username = username.into();
+            auth_token.is_valid = true;
+            auth_token.permissions = permissions;
+            auth_token.is_enterprise = response.is_enterprise;
+
+            if let Err(err) = SessionStorage::set(STATE_STORAGE_KEY, auth_token.clone()) {
+                log::error!("Failed to save state to session storage: {}", err);
+            }
+        });
+
+        if response.grant.expires_in > 0 && !refresh_token.is_empty() {
+            set_timeout(
+                move || {
+                    auth_token.update(|auth_token| {
+                        auth_token.is_valid = false;
+                    });
+                },
+                Duration::from_secs(response.grant.expires_in),
+            );
+        }
+
+        use_navigate()(default_url, Default::default());
+    };
+
+    let passkey_action = create_action(move |(username, base_url): &(String, String)| {
+        let username = username.clone();
+        let base_url = base_url.clone();
+        async move {
+            let u = (!username.is_empty()).then(|| username.as_str());
+            match webauthn_authenticate(&base_url, u).await {
+                AuthenticationResult::Success(response) => {
+                    apply_session(response, username, base_url);
+                }
+                AuthenticationResult::TotpRequired => {}
+                AuthenticationResult::Error(err) => alert.set(err),
+            }
+        }
+    });
 
     let login_action = create_action(
         move |(username, password, base_url): &(String, String, String)| {
@@ -204,6 +262,32 @@ pub fn Login() -> impl IntoView {
                                         </label>
                                     </div>
                                 </div>
+
+                                <Show when=move || passkey_available && !show_totp.get()>
+                                    <button
+                                        type="button"
+                                        class="w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-lg border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 dark:bg-slate-800 dark:border-gray-600 dark:text-white dark:hover:bg-slate-700"
+                                        on:click=move |_| {
+                                            data.update(|data| {
+                                                let login = data
+                                                    .value::<String>("login")
+                                                    .unwrap_or_default();
+                                                let base_url = data
+                                                    .value::<String>("base-url")
+                                                    .unwrap_or_default();
+                                                passkey_action.dispatch((login, base_url));
+                                            });
+                                        }
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M2 18a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2H2z"/>
+                                            <circle cx="8" cy="8" r="4"/>
+                                            <path d="M16 8h6"/>
+                                            <path d="M19 5v6"/>
+                                        </svg>
+                                        Sign in with passkey
+                                    </button>
+                                </Show>
 
                                 <button
                                     type="submit"

@@ -15,6 +15,7 @@ pub mod http;
 pub mod oauth;
 pub mod schema;
 pub mod url;
+pub mod webauthn;
 
 pub const MINIMUM_API_VERSION: Semver = Semver::new(0, 13, 0);
 

@@ -2534,6 +2534,7 @@ dependencies = [
  "gloo-net",
  "gloo-storage",
  "humansize",
+ "js-sys",
  "leptos",
  "leptos-chartistry",
  "leptos-use 0.13.7",
@@ -2547,6 +2548,8 @@ dependencies = [
  "serde_json",
  "serde_urlencoded",
  "totp-rs",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
  "web-sys",
  "web-time",
 ]

@@ -54,7 +54,7 @@ use crate::{
     },
     core::oauth::oauth_refresh_token,
     pages::{
-        account::{crypto::ManageCrypto, password::ChangePassword},
+        account::{crypto::ManageCrypto, passkeys::Passkeys, password::ChangePassword},
         authorize::Authorize,
         config::{edit::SettingsEdit, list::SettingsList, search::SettingsSearch},
         login::Login,
@@ -76,9 +76,6 @@ pub const STATE_STORAGE_KEY: &str = "webadmin_state";
 pub const STATE_LOGIN_NAME_KEY: &str = "webadmin_login_name";
 
 fn main() {
-    core::schema::print_schemas(&build_schemas());
-    return;
-
     _ = console_log::init_with_level(log::Level::Debug);
     console_error_panic_hook::set_once();
     leptos::mount_to_body(|| view! { <App/> })
@@ -540,6 +537,17 @@ pub fn App() -> impl IntoView {
                     />
 
                     <ProtectedRoute
+                        path="/passkeys"
+                        view=Passkeys
+                        redirect_path="/login"
+                        condition=move || {
+                            permissions
+                                .get()
+                                .is_some_and(|p| { p.has_access(Permission::ManagePasswords) })
+                        }
+                    />
+
+                    <ProtectedRoute
                         path="/app-passwords/edit"
                         view=AppPasswordCreate
                         redirect_path="/login"
@@ -824,6 +832,10 @@ impl LayoutBuilder {
             .create("App Passwords")
             .icon(view! { <IconSquare2x2/> })
             .route("/app-passwords")
+            .insert(permissions.has_access(Permission::ManagePasswords))
+            .create("Passkeys")
+            .icon(view! { <IconKey/> })
+            .route("/passkeys")
             .insert(permissions.has_access(Permission::ManagePasswords))
             .menu_items
     }

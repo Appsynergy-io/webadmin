@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 pub mod app_password;
 pub mod crypto;
 pub mod mfa;
+pub mod passkeys;
 pub mod password;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
