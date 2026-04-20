@@ -60,13 +60,15 @@ extern "C" {
 
     #[wasm_bindgen(js_namespace = ["window", "stalwartWebauthn"], catch)]
     async fn authenticate(options_json: &str) -> Result<JsValue, JsValue>;
-
-    #[wasm_bindgen(js_namespace = ["window", "stalwartWebauthn"])]
-    fn supported() -> bool;
 }
 
 pub fn is_webauthn_supported() -> bool {
-    supported()
+    // Check directly via the browser's global so we don't require the JS shim
+    // to be loaded — avoids panicking the WASM module during render.
+    let Some(window) = web_sys::window() else { return false };
+    let pkc = js_sys::Reflect::get(&window, &JsValue::from_str("PublicKeyCredential"))
+        .unwrap_or(JsValue::UNDEFINED);
+    !pkc.is_undefined() && !pkc.is_null()
 }
 
 pub async fn webauthn_authenticate(
