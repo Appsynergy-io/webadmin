@@ -22,7 +22,7 @@ pub fn SideBar(menu_items: Vec<MenuItem>, show_sidebar: RwSignal<bool>) -> impl 
             class:open=move || show_sidebar.get()
         >
             <div class="px-8">
-                <img src="/logo.svg" style="height: 25px;" title=VERSION_NAME/>
+                <img src="logo.svg" style="height: 25px;" title=VERSION_NAME/>
             </div>
 
             <nav

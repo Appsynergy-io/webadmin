@@ -533,7 +533,7 @@ fn QueueItem(message: Message) -> impl IntoView {
             <ListItem subclass="px-6 py-1.5">
                 <a
                     class="inline-flex items-center gap-x-1 text-sm text-blue-600 decoration-2 hover:underline font-medium dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600"
-                    href=format!("/manage/queue/message/{}", message.id)
+                    href=crate::core::url::scope_to_base(format!("/manage/queue/message/{}", message.id))
                 >
                     Manage
                 </a>

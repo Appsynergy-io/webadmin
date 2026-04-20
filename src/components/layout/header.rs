@@ -29,7 +29,7 @@ pub fn Header(permissions: Memo<Option<Permissions>>) -> impl IntoView {
             <nav class="flex basis-full items-center w-full mx-auto px-4 sm:px-6 md:px-8">
 
                 <div class="me-5 lg:me-0 lg:hidden">
-                    <img src="/logo.svg" title=VERSION_NAME/>
+                    <img src="logo.svg" title=VERSION_NAME/>
                 </div>
 
                 <div class="w-full flex items-center justify-end sm:justify-between sm:gap-x-3 sm:order-3">
@@ -165,7 +165,9 @@ pub fn Header(permissions: Memo<Option<Permissions>>) -> impl IntoView {
                                         <a
                                             class="flex items-center gap-x-3.5 py-2 px-3 rounded-lg text-sm text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-300 dark:focus:bg-neutral-700 dark:focus:text-neutral-300"
                                             href=move || {
-                                                permissions.get().map(|p| { p.default_url(false) })
+                                                permissions.get().map(|p| {
+                                                    crate::core::url::scope_to_base(p.default_url(false).to_string())
+                                                })
                                             }
 
                                             class:hidden=move || {
@@ -179,7 +181,7 @@ pub fn Header(permissions: Memo<Option<Permissions>>) -> impl IntoView {
 
                                         <a
                                             class="flex items-center gap-x-3.5 py-2 px-3 rounded-lg text-sm text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-300 dark:focus:bg-neutral-700 dark:focus:text-neutral-300"
-                                            href=DEFAULT_SETTINGS_URL
+                                            href=crate::core::url::scope_to_base(DEFAULT_SETTINGS_URL.to_string())
                                             class:hidden=move || {
                                                 permissions
                                                     .get()
@@ -267,11 +269,13 @@ pub fn Header(permissions: Memo<Option<Permissions>>) -> impl IntoView {
                                                 permissions
                                                     .get()
                                                     .map(|p| {
-                                                        if p.has_access(Permission::ManageEncryption) {
-                                                            "/account/crypto"
-                                                        } else {
-                                                            "/account/password"
-                                                        }
+                                                        crate::core::url::scope_to_base(
+                                                            if p.has_access(Permission::ManageEncryption) {
+                                                                "/account/crypto".to_string()
+                                                            } else {
+                                                                "/account/password".to_string()
+                                                            },
+                                                        )
                                                     })
                                             }
 

@@ -50,7 +50,7 @@ pub fn SettingsSearch() -> impl IntoView {
             let results = results
                 .into_iter()
                 .map(|(id, title, matches)| {
-                    let url = format!("/settings/{id}/edit");
+                    let url = crate::core::url::scope_to_base(format!("/settings/{id}/edit"));
                     view! {
                         <a
                             class="group flex flex-col bg-white border shadow-sm rounded-xl hover:shadow-md transition dark:bg-slate-900 dark:border-gray-800"

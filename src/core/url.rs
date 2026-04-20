@@ -8,6 +8,25 @@ use std::borrow::Cow;
 
 use ahash::AHashMap;
 
+// When the webadmin UI is served under a path prefix (e.g. /admin), runtime-
+// constructed absolute URLs (`/api/foo`, `/auth/bar`, …) need that prefix too,
+// or browser requests hit the reverse proxy at the wrong path.
+const API_BASE_PREFIX: &str = "/admin";
+
+pub(crate) fn scope_to_base(path: String) -> String {
+    // Scheme-qualified URLs pass through unchanged.
+    if path.contains("://") {
+        return path;
+    }
+    if path == API_BASE_PREFIX || path.starts_with(&format!("{API_BASE_PREFIX}/")) {
+        return path;
+    }
+    if path.starts_with('/') {
+        return format!("{API_BASE_PREFIX}{path}");
+    }
+    path
+}
+
 pub struct UrlBuilder {
     pub path: String,
     pub params: AHashMap<Cow<'static, str>, String>,
@@ -16,7 +35,7 @@ pub struct UrlBuilder {
 impl UrlBuilder {
     pub fn new(path: impl Into<String>) -> Self {
         Self {
-            path: path.into(),
+            path: scope_to_base(path.into()),
             params: AHashMap::new(),
         }
     }

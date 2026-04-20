@@ -86,7 +86,7 @@ impl LayoutBuilder {
         };
         self.menu_items.push(MenuItem {
             name: schema.list.title.into(),
-            route: route.into(),
+            route: crate::core::url::scope_to_base(route).into(),
             ..Default::default()
         });
         self
@@ -107,13 +107,16 @@ impl LayoutBuilder {
 
     pub fn route(mut self, route: impl Into<String>) -> Self {
         self.last_path = route.into();
-        self.chain.last_mut().unwrap().route =
-            Some(format!("{}{}", self.base_path, self.last_path));
+        self.chain.last_mut().unwrap().route = Some(crate::core::url::scope_to_base(format!(
+            "{}{}",
+            self.base_path, self.last_path,
+        )));
         self
     }
 
     pub fn raw_route(mut self, route: impl Into<String>) -> Self {
-        self.chain.last_mut().unwrap().route = route.into().into();
+        self.chain.last_mut().unwrap().route =
+            Some(crate::core::url::scope_to_base(route.into()));
         self
     }
 

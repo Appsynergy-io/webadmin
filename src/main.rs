@@ -158,8 +158,8 @@ pub fn App() -> impl IntoView {
     });
 
     view! {
-        <Router>
-            <Routes>
+        <Router base="/admin">
+            <Routes base="/admin".to_string()>
                 <ProtectedRoute
                     path="/manage"
                     view=move || {

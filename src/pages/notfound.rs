@@ -37,7 +37,7 @@ pub fn NotFound() -> impl IntoView {
                 <div class="mt-5 flex flex-col justify-center items-center gap-2 sm:flex-row sm:gap-3">
                     <a
                         class="w-full sm:w-auto py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:pointer-events-none dark:text-blue-500 dark:hover:text-blue-400 dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600"
-                        href="/manage/directory/accounts"
+                        href=crate::core::url::scope_to_base("/manage/directory/accounts".to_string())
                     >
                         <IconArrowLeft/>
                         Back to manage
