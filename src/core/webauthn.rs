@@ -11,7 +11,7 @@ use crate::components::messages::alert::Alert;
 
 use super::{
     http::{self, HttpRequest},
-    oauth::{AuthenticationResponse, AuthenticationResult, OAuthGrant},
+    oauth::{AuthenticationResponse, AuthenticationResult, OAuthCodeRequest, OAuthCodeResponse, OAuthGrant},
     Permissions,
 };
 
@@ -83,17 +83,10 @@ pub async fn webauthn_authenticate(
         username: username.map(|s| s.to_string()),
     })
     .unwrap()
-    .send::<serde_json::Value>()
+    .send::<WebauthnAuthOptionsResponse>()
     .await
     {
-        Ok(v) => match serde_json::from_value::<WebauthnAuthOptionsResponse>(v) {
-            Ok(r) => r,
-            Err(err) => {
-                return AuthenticationResult::Error(
-                    Alert::error("Invalid server response").with_details(err.to_string()),
-                );
-            }
-        },
+        Ok(r) => r,
         Err(err) => return AuthenticationResult::Error(Alert::from(err)),
     };
 
@@ -125,25 +118,46 @@ pub async fn webauthn_authenticate(
     };
 
     // 3. Send assertion back for verification + token issuance
-    #[derive(Deserialize)]
-    struct VerifyResponse {
-        data: OAuthGrant,
-    }
-
     match HttpRequest::post(format!("{base_url}/auth/webauthn/verify"))
         .with_body(WebauthnAuthVerifyRequest {
             challenge_id: options.challenge_id,
             credential,
         })
         .unwrap()
-        .send::<VerifyResponse>()
+        .send::<OAuthGrant>()
         .await
     {
-        Ok(resp) => AuthenticationResult::Success(AuthenticationResponse {
-            grant: resp.data,
-            permissions: Default::default(),
-            is_enterprise: false,
-        }),
+        Ok(grant) => {
+            // Fetch permissions with the freshly minted bearer token
+            let access_token = grant.access_token.clone();
+            let nonce: String = {
+                use rand::{distributions::Alphanumeric, thread_rng, Rng};
+                thread_rng()
+                    .sample_iter(Alphanumeric)
+                    .take(10)
+                    .map(char::from)
+                    .collect()
+            };
+            let code_req = OAuthCodeRequest::Code {
+                client_id: "webadmin".to_string(),
+                redirect_uri: None,
+                nonce: Some(nonce),
+            };
+            match HttpRequest::post(format!("{base_url}/api/oauth"))
+                .with_header("Authorization", format!("Bearer {access_token}"))
+                .with_body(&code_req)
+                .unwrap()
+                .send::<OAuthCodeResponse>()
+                .await
+            {
+                Ok(info) => AuthenticationResult::Success(AuthenticationResponse {
+                    grant,
+                    permissions: info.permissions,
+                    is_enterprise: info.is_enterprise,
+                }),
+                Err(err) => AuthenticationResult::Error(Alert::from(err)),
+            }
+        }
         Err(http::Error::Unauthorized) => AuthenticationResult::Error(
             Alert::warning("Passkey did not match any account"),
         ),
@@ -152,15 +166,10 @@ pub async fn webauthn_authenticate(
 }
 
 pub async fn webauthn_list(access_token: &str) -> Result<Vec<CredentialInfo>, http::Error> {
-    #[derive(Deserialize)]
-    struct ListResponse {
-        data: Vec<CredentialInfo>,
-    }
     HttpRequest::get("/api/account/webauthn")
         .with_header("Authorization", format!("Bearer {access_token}"))
-        .send::<ListResponse>()
+        .send::<Vec<CredentialInfo>>()
         .await
-        .map(|r| r.data)
 }
 
 pub async fn webauthn_register_flow(
@@ -173,13 +182,10 @@ pub async fn webauthn_register_flow(
     .with_header("Authorization", format!("Bearer {access_token}"))
     .with_body(serde_json::json!({ "name": name }))
     .unwrap()
-    .send::<serde_json::Value>()
+    .send::<WebauthnRegisterOptionsResponse>()
     .await
     {
-        Ok(v) => match v.get("data").cloned().and_then(|d| serde_json::from_value(d).ok()) {
-            Some(r) => r,
-            None => return Err(Alert::error("Invalid server response")),
-        },
+        Ok(r) => r,
         Err(err) => return Err(Alert::from(err)),
     };
 
@@ -194,11 +200,6 @@ pub async fn webauthn_register_flow(
     let credential: serde_json::Value = serde_json::from_str(&attestation_str)
         .map_err(|err| Alert::error("Invalid attestation").with_details(err.to_string()))?;
 
-    #[derive(Deserialize)]
-    struct VerifyResponse {
-        data: CredentialInfo,
-    }
-
     HttpRequest::post("/api/account/webauthn/register/verify")
         .with_header("Authorization", format!("Bearer {access_token}"))
         .with_body(WebauthnRegisterVerifyRequest {
@@ -207,9 +208,8 @@ pub async fn webauthn_register_flow(
             credential,
         })
         .unwrap()
-        .send::<VerifyResponse>()
+        .send::<CredentialInfo>()
         .await
-        .map(|r| r.data)
         .map_err(Alert::from)
 }
 
