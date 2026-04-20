@@ -56,22 +56,7 @@ Stalwart Webadmin is included with Stalwart Mail Server, to install Stalwart Mai
 
 All documentation is available at [stalw.art/docs/get-started](https://stalw.art/docs/get-started).
 
-## Support
-
-If you are having problems running Stalwart Mail Server, you found a bug or just have a question,
-do not hesitate to reach us on [Github Discussions](https://github.com/stalwartlabs/mail-server/discussions),
-[Reddit](https://www.reddit.com/r/stalwartlabs), [Discord](https://discord.gg/aVQr3jF8jd) or [Matrix](https://matrix.to/#/#stalwart:matrix.org).
-Additionally you may purchase a subscription to obtain priority support from Stalwart Labs LLC
 
 ## License
 
-This project is dual-licensed under the **GNU Affero General Public License v3.0** (AGPL-3.0; as published by the Free Software Foundation) and the **Stalwart Enterprise License v1 (SELv1)**:
-
-- The [GNU Affero General Public License v3.0](./LICENSES/AGPL-3.0-only.txt) is a free software license that ensures your freedom to use, modify, and distribute the software, with the condition that any modified versions of the software must also be distributed under the same license. 
-- The [Stalwart Enterprise License v1 (SELv1)](./LICENSES/LicenseRef-SEL.txt) is a proprietary license designed for commercial use. It offers additional features and greater flexibility for businesses that do not wish to comply with the AGPL-3.0 license requirements. 
-
-Each file in this project contains a license notice at the top, indicating the applicable license(s). The license notice follows the [REUSE guidelines](https://reuse.software/) to ensure clarity and consistency. The full text of each license is available in the [LICENSES](./LICENSES/) directory.
-  
-## Copyright
-
-Copyright (C) 2024, Stalwart Labs LLC
+abandonware and opensource
