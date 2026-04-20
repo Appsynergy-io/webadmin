@@ -227,10 +227,10 @@ fn HistoryItem(span: Event) -> impl IntoView {
     if to_count > 0 {
         to.push_str(&format!(" +{to_count} more"));
     }
-    let view_url = format!(
+    let view_url = crate::core::url::scope_to_base(format!(
         "/manage/tracing/span/{}",
         span.get_as_int(Key::SpanId).unwrap_or_default()
-    );
+    ));
 
     view! {
         <tr>

@@ -573,10 +573,10 @@ pub fn QueueManage() -> impl IntoView {
                                                         <ListTextItem>
                                                             <a
                                                                 class="inline-flex items-center gap-x-1 text-sm text-blue-600 decoration-2 hover:underline font-medium dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600"
-                                                                href=format!(
+                                                                href=crate::core::url::scope_to_base(format!(
                                                                     "/manage/tracing/span/{}",
                                                                     span.get_as_int(Key::SpanId).unwrap_or_default(),
-                                                                )
+                                                                ))
                                                             >
 
                                                                 View

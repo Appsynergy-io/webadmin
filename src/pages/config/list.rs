@@ -407,7 +407,7 @@ fn SettingsItem(settings: Settings, schema: Arc<Schema>) -> impl IntoView {
         .map(|s| s.to_string())
         .unwrap_or_default();
     let edit_link = if schema.can_edit() {
-        let edit_url = format!("/settings/{}/{}/edit", schema.id, setting_id);
+        let edit_url = crate::core::url::scope_to_base(format!("/settings/{}/{}/edit", schema.id, setting_id));
         Some(view! {
             <ListItem subclass="px-6 py-1.5">
                 <a
